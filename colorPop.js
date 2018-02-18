@@ -1,7 +1,19 @@
+"use strict";
 // Mr. JPrograms is the creator of this idea. See: https://www.khanacademy.org/computer-programming/color-pop/6416482056208384
 
+// global constants
 const s = 1; // node width and height
 const clrOff = 0.05; // 0 to 1, how much the color can change between nodes
+
+// global variables
+let canvas;
+let cols;
+let rows;
+let ctx;
+let filled;
+let list = new DoublyLinkedList();
+let nodeProg = 0;
+let loopId = 0;
 
 const Node = (x, y, r, g, b) => {
     return {
@@ -43,24 +55,41 @@ const loop = () => {
         nodeProg--;
         setNode(list.remove(list.get(rand(list.length))));
     }
-    list.length && requestAnimationFrame(loop);
+    if (list.length) loopId = requestAnimationFrame(loop);
+};
+const reset = (x, y) => {
+    // if there is already a loop running, stop it
+    if (loopId) {
+        cancelAnimationFrame(loopId);
+        loopId = 0;
+    }
+    list = new DoublyLinkedList();
+    nodeProg = 0;
+    
+    cols = (canvas.width = innerWidth) / s;
+    rows = (canvas.height = innerHeight) / s;
+    ctx = canvas.getContext("2d");
+    
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    filled = new Uint8Array(Math.ceil(cols * rows / 8));
+    if (!x) x = rand(rows);
+    if (!y) y = rand(rows);
+    setNode(Node(x, y, rand(256), rand(256), rand(256)));
+    loop();
+};
+const click = ev => {
+    if (ev.button != 0) {
+        reset(ev.clientX / s, ev.clientY / s);
+    } else {
+        setNode(Node(ev.clientX / s, ev.clientY / s, rand(256), rand(256), rand(256)));
+    }
 };
 const init = () => {
     canvas = document.getElementById("canvas");
-    cols = (canvas.width = innerWidth) / s | 0;
-    rows = (canvas.height = innerHeight) / s | 0;
-    ctx = canvas.getContext("2d");
-    filled = new Uint8Array(Math.ceil(cols * rows / 8));
-    setNode(Node(rand(cols), rand(rows), rand(256), rand(256), rand(256)));
-    loop();
+    canvas.addEventListener("mousedown", click);
+    reset();
 };
-
-let canvas;
-let cols;
-let rows;
-let ctx;
-let filled;
-let list = new DoublyLinkedList();
-let nodeProg = 0;
 
 document.addEventListener("DOMContentLoaded", init);
